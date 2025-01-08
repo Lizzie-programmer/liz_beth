@@ -3,23 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Age Calculator</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>To-Do List App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f3f4f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        .todo-container {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.2em;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #search {
+            margin-bottom: 15px;
+        }
+
+        .todo-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .todo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            transition: background-color 0.3s ease;
+        }
+
+        .todo-item:hover {
+            background-color: #e7f4e4;
+        }
+
+        .todo-item span {
+            flex-grow: 1;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .todo-item button {
+            background-color: #e74c3c;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .todo-item button:hover {
+            background-color: #c0392b;
+        }
+
+        .todo-item span[contenteditable="true"]:empty:before {
+            content: "Edit task...";
+            color: #aaa;
+        }
+
+    </style>
 </head>
 <body>
-    <div class="age-calculator-container">
-        <h1>Age Calculator</h1>
 
-        <label for="birthdate">Enter your birthdate:</label>
-        <input type="date" id="birthdate" name="birthdate" required>
+    <h1>To-Do List</h1>
 
-        <button onclick="calculateAge()">Calculate Age</button>
+    <div class="todo-container">
+        <input type="text" id="search" placeholder="Search to-dos...">
+        <input type="text" id="new-item" placeholder="Add new to-do...">
+        <button onclick="addItem()">Add</button>
 
-        <div id="age-result" class="age-result">
-            <p id="age"></p>
-        </div>
+        <ul id="todo-list" class="todo-list"></ul>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // Load the to-do items from local storage
+        function loadItems() {
+            const items = JSON.parse(localStorage.getItem("todos")) || [];
+            const todoList = document.getElementById("todo-list");
+            todoList.innerHTML = ""; // Clear the list before adding the updated items
+
+            items.forEach((item, index) => {
+                const li = document.createElement("li");
+                li.classList.add("todo-item");
+                li.innerHTML = `
+                    <span contenteditable="true" onblur="editItem(${index}, this)">${item}</span>
+                    <button onclick="deleteItem(${index})">Delete</button>
+                `;
+                todoList.appendChild(li);
+            });
+        }
+
+        // Save to-do items to local storage
+        function saveItems(items) {
+            localStorage.setItem("todos", JSON.stringify(items));
+        }
+
+        // Add a new item
+        function addItem() {
+            const newItem = document.getElementById("new-item").value;
+            if (newItem.trim() === "") return;
+
+            const items = JSON.parse(localStorage.getItem("todos")) || [];
+            items.push(newItem);
+            saveItems(items);
+
+            document.getElementById("new-item").value = ""; // Clear input field
+            loadItems(); // Reload the list
+        }
+
+        // Edit an existing item
+        function editItem(index, element) {
+            const items = JSON.parse(localStorage.getItem("todos")) || [];
+            items[index] = element.innerText;
+            saveItems(items);
+        }
+
+        // Delete an item
+        function deleteItem(index) {
+            const items = JSON.parse(localStorage.getItem("todos")) || [];
+            items.splice(index, 1);
+            saveItems(items);
+            loadItems(); // Reload the list
+        }
+
+        // Search for to-dos
+        document.getElementById("search").addEventListener("input", function () {
+            const query = this.value.toLowerCase();
+            const items = JSON.parse(localStorage.getItem("todos")) || [];
+            const filteredItems = items.filter(item => item.toLowerCase().includes(query));
+            
+            const todoList = document.getElementById("todo-list");
+            todoList.innerHTML = ""; // Clear the list
+
+            filteredItems.forEach((item, index) => {
+                const li = document.createElement("li");
+                li.classList.add("todo-item");
+                li.innerHTML = `
+                    <span contenteditable="true" onblur="editItem(${index}, this)">${item}</span>
+                    <button onclick="deleteItem(${index})">Delete</button>
+                `;
+                todoList.appendChild(li);
+            });
+        });
+
+        // Initial load of to-do items
+        loadItems();
+    </script>
 </body>
 </html>
